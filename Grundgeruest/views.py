@@ -21,7 +21,8 @@ from Veranstaltungen.models import Veranstaltung
 from Bibliothek.models import Buch
 from .forms import ZahlungFormular, ProfilEditFormular
 from datetime import date
-
+# import chargebee_utils as cb
+from .chargebee_utils import create_customer
 
 def erstelle_liste_menue(user=None):
     if user is None or not user.is_authenticated():
@@ -110,6 +111,12 @@ def zahlen(request):
                 # erstelle neuen Nutzer mit eingegebenen Daten:
                 nutzer = Nutzer.neuen_erstellen(request.POST['email'])
                 profil = nutzer.my_profile
+                try:
+                    with transaction.atomic():
+                        customer = create_customer(request.POST)
+                        profil.customer_id=customer.id
+                except DatabaseError as e:
+                    print(e)
                 signup = nutzer.userena_signup
                 nutzer.first_name = request.POST['vorname']
                 nutzer.last_name = request.POST['nachname']
@@ -150,6 +157,93 @@ from guardian.decorators import permission_required_or_403
 from userena import settings as userena_settings
 from userena.views import ExtraContextTemplateView
 from django.contrib import messages
+from userena.forms import SignupForm, SignupFormOnlyEmail
+from userena import signals as userena_signals
+
+@secure_required
+def signup(request, signup_form=SignupForm,
+           template_name='userena/signup_form.html', success_url=None,
+           extra_context=None):
+    """
+    Signup of an account.
+
+    Signup requiring a username, email and password. After signup a user gets
+    an email with an activation link used to activate their account. After
+    successful signup redirects to ``success_url``.
+
+    :param signup_form:
+        Form that will be used to sign a user. Defaults to userena's
+        :class:`SignupForm`.
+
+    :param template_name:
+        String containing the template name that will be used to display the
+        signup form. Defaults to ``userena/signup_form.html``.
+
+    :param success_url:
+        String containing the URI which should be redirected to after a
+        successful signup. If not supplied will redirect to
+        ``userena_signup_complete`` view.
+
+    :param extra_context:
+        Dictionary containing variables which are added to the template
+        context. Defaults to a dictionary with a ``form`` key containing the
+        ``signup_form``.
+
+    **Context**
+
+    ``form``
+        Form supplied by ``signup_form``.
+
+    """
+    # If signup is disabled, return 403
+    if userena_settings.USERENA_DISABLE_SIGNUP:
+        raise PermissionDenied
+
+    # If no usernames are wanted and the default form is used, fallback to the
+    # default form that doesn't display to enter the username.
+    if userena_settings.USERENA_WITHOUT_USERNAMES and (signup_form == SignupForm):
+        signup_form = SignupFormOnlyEmail
+
+    form = signup_form()
+
+    if request.method == 'POST':
+        form = signup_form(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save()
+            
+            # Chargebee
+            try:
+                with transaction.atomic():
+                    customer = create_customer(form.cleaned_data)
+                    user.customer_id=customer.id
+                    user.save()
+            except DatabaseError as e:
+                print(e)
+                
+            # Send the signup complete signal
+            userena_signals.signup_complete.send(sender=None,
+                                                 user=user)
+
+
+            if success_url: redirect_to = success_url
+            else: redirect_to = reverse('userena_signup_complete',
+                                        kwargs={'username': user.username})
+
+            # A new signed user should logout the old one.
+            if request.user.is_authenticated():
+                logout(request)
+
+            if (userena_settings.USERENA_SIGNIN_AFTER_SIGNUP and
+                not userena_settings.USERENA_ACTIVATION_REQUIRED):
+                user = authenticate(identification=user.email, check_password=False)
+                login(request, user)
+
+            return redirect(redirect_to)
+
+    if not extra_context: extra_context = dict()
+    extra_context['form'] = form
+    return ExtraContextTemplateView.as_view(template_name=template_name,
+                                            extra_context=extra_context)(request)
 
 @secure_required
 @permission_required_or_403('change_profile', (get_profile_model(), 'user__username', 'username'))

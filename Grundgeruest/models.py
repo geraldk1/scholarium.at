@@ -198,6 +198,10 @@ class ScholariumProfile(UserenaBaseProfile):
         default=0, null=True, editable=False)
     alt_registration_ip = models.GenericIPAddressField(
         editable=False, null=True)
+    
+    # Chargebee
+    customer_id =  models.CharField(max_length=40, blank=True, null=True) # Chargebee customer id
+    # page_id = models.CharField(max_length=40, blank=True, null=True)
 
     def nicht_abgelaufen(self):
         if self.stufe > 0:

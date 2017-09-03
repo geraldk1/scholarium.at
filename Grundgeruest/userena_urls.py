@@ -19,7 +19,7 @@ def merged_dict(dict_a, dict_b):
 urlpatterns = [
     # Signup, signin and signout
     url(r'^eintragen/$',
-       userena_views.signup,
+       grundgeruest_views.signup,
        {'signup_form': Anmeldeformular},
        name='userena_signup'),
     url(r'^anmelden/$',
