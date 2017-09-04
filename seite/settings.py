@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'easy_thumbnails',
     'django.contrib.sites',
     'django.contrib.humanize',
-    'easycart', 
+    'easycart',
     'django_countries',
 ]
 
@@ -201,3 +201,6 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'iljasseite@gmail.com'
 EMAIL_HOST_PASSWORD = 'iljailja'
+
+CHARGEBEE_APIKEY ='test_UUabLO8olHFMxUeHP7QaDXuZ1wOcdd1Jx'
+CHARGEBEE_SITENAME = 'scholarium-test'
