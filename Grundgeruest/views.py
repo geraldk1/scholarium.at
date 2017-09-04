@@ -22,7 +22,7 @@ from Bibliothek.models import Buch
 from .forms import ZahlungFormular, ProfilEditFormular
 from datetime import date
 # import chargebee_utils as cb
-from .chargebee_utils import create_customer
+from .chargebee_utils import create_customer, new_subscription
 
 def erstelle_liste_menue(user=None):
     if user is None or not user.is_authenticated():
@@ -63,17 +63,17 @@ class MenueMixin():
         context['liste_menue'] = liste_menue
         context['url_hier'] = self.url_hier
         context.update(self.extra_context)
-        return context        
+        return context
 
 class TemplateMitMenue(MenueMixin, TemplateView):
-    pass 
-    
+    pass
+
 class ListeMitMenue(MenueMixin, ListView):
     pass
 
 class DetailMitMenue(MenueMixin, DetailView):
     pass
-        
+
 def index(request):
     if request.user.is_authenticated():
         liste_artikel = Artikel.objects.order_by('-datum_publizieren')[:4]
@@ -84,7 +84,7 @@ def index(request):
         return TemplateMitMenue.as_view(
             template_name='startseite.html',
             extra_context={
-                'liste_artikel': liste_artikel, 
+                'liste_artikel': liste_artikel,
                 'medien': medien,
                 'veranstaltungen': veranstaltungen,
                 'buecher': buecher
@@ -93,17 +93,17 @@ def index(request):
         return TemplateMitMenue.as_view(
             template_name='Gast/startseite_gast.html'
             )(request)
-    
+
 def zahlen(request):
     # falls POST von unangemeldet, keine Fehlermeldungen:
     #if request.method=='POST' and 'von_spende' in request.POST:
     #    formular = ZahlungFormular(request.POST)
-    
+
     # falls POST von hier, werden Daten verarbeitet:
     if request.method=='POST':
         # eine form erstellen, insb. um sie im Fehlerfall zu nutzen:
         formular = ZahlungFormular(request.POST)
-        # und falls alle Eingaben gültig sind, Daten verarbeiten: 
+        # und falls alle Eingaben gültig sind, Daten verarbeiten:
         if formular.is_valid():
             if not (request.user.is_authenticated() or
                 Nutzer.objects.filter(email=request.POST['email'])):
@@ -111,33 +111,32 @@ def zahlen(request):
                 # erstelle neuen Nutzer mit eingegebenen Daten:
                 nutzer = Nutzer.neuen_erstellen(request.POST['email'])
                 profil = nutzer.my_profile
-                try:
-                    with transaction.atomic():
-                        customer = create_customer(request.POST)
-                        profil.customer_id=customer.id
-                except DatabaseError as e:
-                    print(e)
                 signup = nutzer.userena_signup
                 nutzer.first_name = request.POST['vorname']
                 nutzer.last_name = request.POST['nachname']
                 profil.stufe = int(request.POST['stufe'])
                 profil.guthaben_aufladen(request.POST['betrag'])
                 # ? hier noch Zahlungsdatum eintragen, oden bei Eingang ?
-                for attr in ['anrede', 'tel', 'firma', 'strasse', 'plz', 
+                for attr in ['anrede', 'tel', 'firma', 'strasse', 'plz',
                     'ort', 'land']:
                     setattr(profil, attr, request.POST[attr])
+                with transaction.atomic():
+                    # customer = create_customer(request.POST)
+                    result = new_subscription(request.POST, profil.stufe_choices[profil.stufe+1][1].lower())
+                    profil.customer_id=customer.id
+
 
                 nutzer.save()
                 profil.save()
             else:
                 print('{0}gibts schon{0}'.format(10*'\n'))
-                
+
             # redirect to a new URL:
             return HttpResponseRedirect('/thanks/')
-        
+
         if 'von_spende' in request.POST:
             formular = ZahlungFormular()
-    
+
     # if a GET (or any other method) we'll create a blank form
     else:
         formular = ZahlungFormular()
@@ -145,9 +144,9 @@ def zahlen(request):
     stufe = request.POST.get('stufe', 'Gast')
     betrag = request.POST.get('betrag', '75')
 
-    return render(request, 'Produkte/zahlung.html', 
-        {'formular': formular, 'betrag': betrag, 'stufe': stufe})    
-        
+    return render(request, 'Produkte/zahlung.html',
+        {'formular': formular, 'betrag': betrag, 'stufe': stufe})
+
 
 
 # profile_edit aus userena.views kopiert, um Initialisierung der Nutzer-Daten (Felder auf Nutzer heißen anders als userena erwartet) zu ändern
@@ -210,7 +209,7 @@ def signup(request, signup_form=SignupForm,
         form = signup_form(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
-            
+
             # Chargebee
             try:
                 with transaction.atomic():
@@ -219,7 +218,7 @@ def signup(request, signup_form=SignupForm,
                     user.save()
             except DatabaseError as e:
                 print(e)
-                
+
             # Send the signup complete signal
             userena_signals.signup_complete.send(sender=None,
                                                  user=user)
@@ -296,7 +295,7 @@ def profile_edit(request, username, edit_profile_form=ProfilEditFormular,
     profile = get_user_profile(user=user)
 
     user_initial = {'vorname': user.first_name,
-                    'nachname': user.last_name, 
+                    'nachname': user.last_name,
                     'email': user.email,}
 
     form = edit_profile_form(instance=profile, initial=user_initial)
@@ -325,7 +324,7 @@ def profile_edit(request, username, edit_profile_form=ProfilEditFormular,
     extra_context['profile'] = profile
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
-                                            
+
 def profile_detail(request, username,
     template_name=userena_settings.USERENA_PROFILE_DETAIL_TEMPLATE,
     extra_context=None, **kwargs):
@@ -333,22 +332,22 @@ def profile_detail(request, username,
 
 
 def seite_rest(request, slug):
-    punkte = (Hauptpunkt.objects.filter(slug=slug) or 
+    punkte = (Hauptpunkt.objects.filter(slug=slug) or
               Unterpunkt.objects.filter(slug=slug))
-    if not punkte: 
+    if not punkte:
         raise Http404
     liste_menue = erstelle_liste_menue()
     return render(
-        request, 
-        'Grundgeruest/seite_test.html', 
+        request,
+        'Grundgeruest/seite_test.html',
         {'punkt': punkte[0], 'liste_menue': liste_menue})
 
 def aus_datei_mitglieder_einlesen(request):
     """
     Liest Mitglieder aus der Datenbank im Parent-Ordner
-    
+
     Idee: öffne Datenbank und hole Zeilen als dict Attribut -> Wert
-    erstelle dict für alte Attributnamen -> neue Namen 
+    erstelle dict für alte Attributnamen -> neue Namen
     erstelle Liste von Nutzern und speichere sie (wegen Profil und Signup)
     füge für jeden Nutzer alle Attribute hinzu, speichere
     """
@@ -359,7 +358,7 @@ def aus_datei_mitglieder_einlesen(request):
         cur.execute("SELECT * FROM mitgliederExt")
 
         zeilen = [dict(zeile) for zeile in cur.fetchall()]
-            
+
     profil_attributnamen = dict([
         ('stufe', 'Mitgliedschaft'),
         ('anrede', 'Anrede'),
@@ -390,12 +389,12 @@ def aus_datei_mitglieder_einlesen(request):
         ('date_joined', 'user_registration_datetime'),
         ('last_login', 'last_login_time'),
     ])
-    
+
     zeilen = zeilen[:]
-    Nutzer.objects.filter(id__gt=3).delete()    
-        
+    Nutzer.objects.filter(id__gt=3).delete()
+
     letzte_id = max(Nutzer.objects.all().values_list('id', flat=True))
-    
+
     liste_nutzer = []
     with transaction.atomic():
         for i, zeile in enumerate(zeilen):
@@ -404,11 +403,11 @@ def aus_datei_mitglieder_einlesen(request):
             nutzer.is_active = True
             nutzer.save()
             print('alte id {} angelegt: {} vom {}'.format(
-                zeile['user_id'], 
-                zeile['user_email'], 
+                zeile['user_id'],
+                zeile['user_email'],
                 zeile['user_registration_datetime']))
             liste_nutzer.append(nutzer)
-    
+
     for zeile in zeilen: # falls None drin steht, gäbe es sonst Fehler
         zeile['Vorname'] = zeile['Vorname'] or ''
         zeile['Nachname'] = zeile['Nachname'] or ''
@@ -417,7 +416,7 @@ def aus_datei_mitglieder_einlesen(request):
                 zeile[k] = '1111-01-01 00:00:00'
             if v == '0000-00-00':
                 zeile[k] = '1111-01-01'
-        
+
     def eintragen_nutzer(nutzer, zeile):
         for neu, alt in nutzer_attributnamen.items():
             setattr(nutzer, neu, zeile[alt])
@@ -425,7 +424,7 @@ def aus_datei_mitglieder_einlesen(request):
     def eintragen_profil(profil, zeile):
         for neu, alt in profil_attributnamen.items():
             setattr(profil, neu, zeile[alt])
-    
+
     with transaction.atomic():
         for i, nutzer in enumerate(liste_nutzer):
             zeile = zeilen[i]
@@ -436,15 +435,15 @@ def aus_datei_mitglieder_einlesen(request):
             profil = nutzer.my_profile
             eintragen_profil(profil, zeile)
             profil.save()
-    
+
     return 'fertig'
 
 def aus_alter_db_einlesen():
-    """ liest Mitwirkende aus alter db (als .sqlite exportiert) aus 
+    """ liest Mitwirkende aus alter db (als .sqlite exportiert) aus
     !! Achtung, löscht davor die aktuellen Einträge !! """
-    
+
     Mitwirkende.objects.all().delete()
-    
+
     con = lite.connect(os.path.join(settings.BASE_DIR, 'alte_db.sqlite3'))
     with con:
         con.row_factory = lite.Row
@@ -456,13 +455,13 @@ def aus_alter_db_einlesen():
     with transaction.atomic():
         for person in zeilen:
             neu = Mitwirkende.objects.create(alt_id=person['id'])
-                
-            for attr in ['name', 'text_de', 'text_en', 'link', 'level', 
+
+            for attr in ['name', 'text_de', 'text_en', 'link', 'level',
                 'start', 'end']:
                 if person[attr] == '0000-00-00':
                     person[attr] = '1111-01-01'
                 setattr(neu, attr, person[attr])
-            
+
             neu.save()
 
 
@@ -473,7 +472,7 @@ def alles_aus_mysql_einlesen():
      - Veranstaltungen
      - [zu vervollständigen]
     """
-    import os 
+    import os
     from Veranstaltungen.views import aus_alter_db_einlesen as einlesen_v
     from Scholien.views import aus_alter_db_einlesen as einlesen_s
     liste_dateien = os.listdir('.')
@@ -500,19 +499,18 @@ def db_runterladen(request):
     from django.utils.encoding import smart_str
     import os
     from seite.settings import BASE_DIR
-     
+
     with open(os.path.join(BASE_DIR, 'db.sqlite3'), 'rb') as datei:
         datenbank = datei.read()
 
-    response = HttpResponse(datenbank, content_type='application/force-download') 
+    response = HttpResponse(datenbank, content_type='application/force-download')
     response['Content-Disposition'] = 'attachment; filename="db.sqlite3"'
-    
+
     return response
 
 class ListeAktiveMitwirkende(ListeMitMenue):
     template_name='Gast/mitwirkende.html'
     context_object_name='mitwirkende'
-    
+
     def get_queryset(self):
         return Mitwirkende.objects.exclude(end__lt=date.today())
-    

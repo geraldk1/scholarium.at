@@ -29,10 +29,11 @@ def create_checkout(customer, plan_id):
     except InvalidRequestError:
         return None
 
-# def change_plan(customer, plan_id):
-#     plan_data = {
-#             'plan_id': plan_id
-#         }
-#         
+def new_subscription(customer, plan_id):
+    result = chargebee.Subscription.create({
+    'plan_id': plan_id,
+    'customer': customer,
+    })
+
 # def db_to_cb():
-#     for 
+#     for
