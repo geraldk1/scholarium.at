@@ -8,6 +8,30 @@ from .forms import ZahlungFormular
 from .models import Hauptpunkt, Unterpunkt, ScholariumProfile, Mitwirkende, Unterstuetzung
 
 
+class AnredeNullAndBlankListFilter(admin.SimpleListFilter):
+    """Filters by field anrede"""
+    title = 'Anrede'
+    parameter_name = 'anrede'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('herr', 'Herr'),
+            ('frau', 'Frau'),
+            ('null', 'NULL'),
+            ('blank', 'BLANK')
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'herr':
+            return queryset.filter(anrede='Herr')
+        if self.value() == 'frau':
+            return queryset.filter(anrede='Frau')
+        if self.value() == 'null':
+            return queryset.filter(anrede__isnull=True)
+        if self.value() == 'blank':
+            return queryset.filter(anrede='')
+
+
 class StufenPlusUnterstuetzerListFilter(admin.SimpleListFilter):  # Nicht in Benutzung, Unterstützung.stufe ist nicht mehr möglich.
     """
     This filter extends the common list_filter = ('stufe') by the option
@@ -45,7 +69,7 @@ class UnterstuetzungInline(admin.TabularInline):
 
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_filter = ['land']
+    list_filter = ('newsletter', AnredeNullAndBlankListFilter, 'land')
     search_fields = ['user__email', 'user__first_name', 'user__last_name']
     list_display = ['anrede', 'user', 'guthaben', 'get_Status', 'get_aktiv', 'get_ablauf']
     inlines = [UnterstuetzungInline]

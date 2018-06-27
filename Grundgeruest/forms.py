@@ -54,7 +54,7 @@ class ProfilEditFormular(forms.ModelForm):
     class Meta:
         model = ScholariumProfile
         fields = ['email', 'anrede', 'vorname', 'nachname', 'tel', 'firma',
-                  'strasse', 'plz', 'ort', 'land']
+                  'strasse', 'plz', 'ort', 'land', 'newsletter']
         widgets = {'land': CountrySelectWidget()}
 
     def save(self, force_insert=False, force_update=False, commit=True):

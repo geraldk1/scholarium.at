@@ -71,6 +71,10 @@
   {{ form.land.label_tag }}&nbsp
   {{ form.land }}
   <br>
+  {{ form.newsletter.errors }}
+  {{ form.newsletter.label_tag }}
+  {{ form.newsletter }}
+  <br>
   <input type="submit" value="{% trans "Save changes" %}" />
 </div>
 </form>

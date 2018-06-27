@@ -1,0 +1,15 @@
+{% extends 'Workflow/control-frame.html' %}
+
+{% block body %}
+<h1>
+  {% block title %}
+    Newsletter verwerfen
+  {% endblock title %}
+</h1>
+<form method="post">{% csrf_token %}
+    <p>Den Newsletter „{{ object }}“ wirklich verwerfen?</p>
+    <input type="submit" value="Bestätigen" />
+</form>
+{% endblock %}
+{% block links %}
+{% endblock %}

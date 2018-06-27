@@ -1,0 +1,32 @@
+{% extends 'Workflow/control-frame.html' %}
+
+{% block body %}
+<h1>
+  {% block title %}
+    Newslettervorlagen
+  {% endblock title %}
+</h1>
+{% if newsletter_list %}
+  <table style="border-collapse:collapse">
+      <tr class="nlheader">
+        <th>Bezeichnung</th><th>Betreff</th><th>Status</th><th>Versandzeit</th>
+      </tr>
+      {% for newsletter in newsletter_list %}
+        <tr class="nlrow {% cycle '' 'altrow' %}">
+          <td><a href="{% url 'Workflow:newsletter-create-with-template' newsletter.slug %}">{{ newsletter.bezeichnung }}</a></td>
+          <td>{{ newsletter.subject }}</td>
+          <td>{{ newsletter.get_status_display }}</td>
+          <td>{{ newsletter.send_date|date:"d.m.y h:s " }}</td>
+        </tr>
+      {% endfor %}
+  </table>
+{% else %}
+  <p>
+    Keine Newsletter zur Nutzung als Vorlage vorhanden.
+  </p><p>
+    <a href="{% url 'Workflow:newsletter-create' %}">&rarr; Zur Erstellung ohne Vorlage</a>
+  </p>
+{% endif %}
+{% endblock %}
+{% block links %}
+{% endblock %}

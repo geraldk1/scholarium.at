@@ -1,0 +1,70 @@
+.inputbutton {
+	text-decoration: none;
+    text-align: center;
+    vertical-align: middle;
+	background: rgb(46,74,98);
+	color: #fff;
+	border: 0;
+	border-radius: 2px;
+	min-width: 150px;
+	height: 40px;
+	font-size: 16pt;
+	font-family: "Futura Book", Helvetica, Arial, serif;
+	box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.12), 0px 0px 1px 0px rgba(0, 0, 0, 0.24);
+    cursor: pointer;
+    padding: 5px;
+}
+
+.inputbutton:hover {
+	background: rgb(30,48,64);
+}
+
+.pay_option_box_inputbutton {
+	text-decoration: none;
+	background: rgb(237,120,2);
+	color: #fff;
+	text-shadow: 1px 1px 4px 0 rgba(0,0,0,0.9);
+	border: 0;
+	border-radius: 2px;
+	margin: 10px 0 15px 0;
+	width: 415px;
+	height: 50px;
+	font-size: 16pt;
+	font-family: "Garamond", Georgia, Times, sans-serif;
+	box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.16) inset, 0px 0px 10px 0px rgba(0, 0, 0, 0.34) inset;
+    cursor: pointer;
+}
+
+.pay_option_box_inputbutton:hover {
+	background: rgb(230,103,2);
+}
+
+.nlheader th {
+    background-color: #4c4c4c;
+    color: white;
+    text-align: center;
+    padding: 8px 5px;
+    border: none;
+}
+
+.nlrow td {
+    padding: 5px 10px;
+    text-align: center;
+}
+
+.altrow {
+    background-color: #e0e0e0;
+}
+
+.success {
+    background-color: rgba(0, 128, 0, 0.15);
+    padding: 10px;
+    text-align: center;
+    color: green;
+    border: 1px solid green;
+    border-radius: 3px;
+}
+
+input, textarea {
+    background-color: #f4f4f4;
+}

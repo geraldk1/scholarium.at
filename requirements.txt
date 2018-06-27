@@ -21,10 +21,12 @@ django-easycart==0.4.0
 django-extensions==1.7.5
 django-google-analytics-app==4.3.0
 django-guardian==1.4.9
+django-sendgrid-v5==0.6.892
 django-userena==2.0.1
 docutils==0.13.1
 easy-thumbnails==2.4.2
 feedparser==5.2.1
+future==0.16.0
 gocardless-pro==1.1.0
 html2text==2014.12.29
 idna==2.6
@@ -53,11 +55,13 @@ pyOpenSSL==17.3.0
 pypandoc==1.4
 pyparsing==2.1.10
 python-dateutil==2.6.1
+python-http-client==3.1.0
 python-slugify==1.2.4
 pytz==2017.2
 Pyzotero==1.2.13
 requests==2.18.4
 requests-oauthlib==0.8.0
+sendgrid==5.4.0
 simplegeneric==0.8.1
 six==1.11.0
 traitlets==4.3.2

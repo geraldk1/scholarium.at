@@ -1,0 +1,87 @@
+{% extends 'Workflow/control-frame.html' %}
+{% block script %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+$(document).ready(function () {
+    // toggle button for fields body_template and events_template which are
+    // initially hidden because they are unlikely to be changed when creating a
+    // new newsletter on the basis of an older one
+     $('#id_body_template').hide();
+     $('#toggle_body_template').click(function(){
+        $('#id_body_template').toggle();
+    });
+    $('#id_events_template').hide();
+    $('#toggle_events_template').click(function(){
+       $('#id_events_template').toggle();
+   });
+   // show the fields html_content and plain_content only when the respective
+   // checkbox fields are checked
+     $('#id_html_content').hide();
+     $('#id_plain_content').hide();
+     $('#id_edit_html').click(function () {
+         var $this = $(this);
+         if ($this.is(':checked')) {
+             $('#id_html_content').show();
+         } else {
+             $('#id_html_content').hide();
+         }
+     });
+     $('#id_edit_plain').click(function () {
+         var $this = $(this);
+         if ($this.is(':checked')) {
+             $('#id_plain_content').show();
+         } else {
+             $('#id_plain_content').hide();
+         }
+     });
+ });
+</script>
+{% endblock %}
+{% block body %}
+<h1>
+  {% block title %}
+    Newsletter {% if object %}bearbeiten{% else %}erstellen{% endif %}
+  {% endblock title %}
+</h1>
+<form action="" method="post" novalidate>
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    {% for hidden_field in form.hidden_fields %}
+      {{ hidden_field.errors }}
+      {{ hidden_field }}
+    {% endfor %}
+
+    <table border="1">
+      {% for field in form.visible_fields %}
+        <tr>
+          <th>{{ field.label_tag }}</th>
+          <td>
+            {{ field.errors }}
+            {{ field }}
+            {% if field.name == 'body_template' or field.name == 'events_template'%}
+            <br />
+              <button type ="button" id="toggle_{{ field.name }}">Feld anzeigen/verbergen</button>
+            {% endif %}
+            {% if field.help_text %}
+              <br /><br />
+            {% endif %}
+            {{ field.help_text }}
+          </td>
+        </tr>
+      {% endfor %}
+        <tr>
+              <td>&nbsp;</td>
+              <td><input type="submit" value="Zur Vorschau" /></td>
+          </tr>
+    </table>
+  </form>
+
+<div style="padding-top: 15px;">
+  <a href="{% url 'Workflow:newsletter-list' %}">Zu den Vorlagen</a>
+</div>
+<div style="padding-top: 15px;">
+  <a href="{% url 'Workflow:index' %}">Zum Control-Panel</a>
+</div>
+{% endblock %}

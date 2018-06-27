@@ -1,0 +1,54 @@
+{% extends 'Workflow/control-frame.html' %}
+{% load workflow_extras %}
+
+{% block title %} Newslettervorschau{% endblock title %}
+
+{% block body %}
+<h1>Newslettervorschau</h1>
+<p>
+  {% include 'Workflow/preview_options.html' %}
+</p><p>
+<strong>{{ newsletter|field_verbose_name:'subject' }}:</strong> {{ newsletter.subject }}
+</p><p>
+{% for name, value in recipients_dict.items %}
+{% if forloop.first %} <strong>Empfängergruppen: <br /><br /></strong>{% endif %}
+{% if value %}
+  {{ name }}{% if not forloop.last %}<br /> {% endif %}
+{% endif %}
+{% endfor %}
+</p><p>
+{% for name, value in recipients_dict.items %}
+  {% if forloop.first %} <strong>Nicht ausgewählte Empfängergruppen:<br /><br /></strong> {% endif %}
+  {% if not value %}
+    {{ name }}{% if not forloop.last %}<br /> {% endif %}
+  {% endif %}
+{% endfor %}
+</p><p>
+  <strong>{{ newsletter|field_verbose_name:'preheader' }}:</strong> {{ newsletter.preheader }}
+</p><p>
+  <strong>{{ newsletter|field_verbose_name:'status' }}:</strong> {{ newsletter.get_status_display }}
+</p>
+{% if newsletter.send_date %}
+<p>
+  <strong>{{ newsletter|field_verbose_name:'send_date' }}:</strong> {{ newsletter.send_date }}
+</p>
+{% endif %}
+<p>
+<strong>{{ newsletter|field_verbose_name:'sender_id' }}:</strong> {{ newsletter.sender_id }}
+</p><p>
+<strong>{{ newsletter|field_verbose_name:'custom_unsubscribe_url' }}:</strong> {{ newsletter.custom_unsubscribe_url }}
+</p><p>
+ <strong>HTML:</strong>
+{{ newsletter.html_content|safe }}
+</p><p>
+  {% include 'Workflow/preview_options.html' %}
+</p><p>
+  <strong>Klartext (ohne HTML):</strong>
+</p><p>
+  {{ newsletter.plain_content|linebreaksbr }}
+</p><p>
+  {% include 'Workflow/preview_options.html' %}
+</p>
+{% endblock body %}
+{% block links %}
+{% endblock links %}

@@ -13,7 +13,6 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 from userena.models import UserenaBaseProfile, UserenaSignup
 from userena.utils import generate_sha1
-from django.core.validators import RegexValidator
 import random
 from django_countries.fields import CountryField
 from datetime import datetime, date, timedelta
@@ -209,6 +208,7 @@ class ScholariumProfile(UserenaBaseProfile):
         default=0, null=True, editable=False)
     alt_registration_ip = models.GenericIPAddressField(
         editable=False, null=True)
+    newsletter = models.BooleanField(default=False)
 
     def get_aktiv(self):
         '''Gibt HÖCHSTE aktive Unterstützung zurück'''
@@ -226,13 +226,15 @@ class ScholariumProfile(UserenaBaseProfile):
         u = self.unterstuetzung_set.all().order_by('-datum')
         return u[0].get_ablauf() if u else None
 
+    PROFILE_STATUS_OPTIONS = [
+        (0, "Kein Unterstützer"),
+        (1, "Abgelaufen"),
+        (2, "30 Tage bis Ablauf"),
+        (3, "Aktiv")
+    ]
+
     def get_Status(self):
-        status = [
-            (0, "Kein Unterstützer"),
-            (1, "Abgelaufen"),
-            (2, "30 Tage bis Ablauf"),
-            (3, "Aktiv")
-        ]
+        status = self.PROFILE_STATUS_OPTIONS
         if self.get_ablauf():
             verbleibend = (self.get_ablauf() - datetime.now().date()).days
             if verbleibend < 0:

@@ -1,0 +1,6 @@
+<a href="{% url 'Workflow:newsletter-update' newsletter.slug %}" class="inputbutton">Eingaben bearbeiten</a>
+<a href="{% url 'Workflow:newsletter-delete' newsletter.slug %}" class="inputbutton">Newsletter verwerfen</a>
+<form action="{% url 'Workflow:newsletter-confirm' newsletter.slug %}" method="post">
+    {% csrf_token %}
+    <input class="pay_option_box_inputbutton" type="submit" value="Newsletter speichern" />
+</form>
